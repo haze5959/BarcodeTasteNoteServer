@@ -1,21 +1,23 @@
 export class Product {
-  uid: string;
-  email: string | undefined;
-  name: string | undefined;
-  photoUrl: string | undefined;
-  validSince: string | undefined;
-  lastLoginAt: string | undefined;
-  createdAt: string | undefined;
-  lastRefreshAt: string | undefined;
+  barcodeId: number;
+  name: string;
+  imageId: number;
 
   constructor(json: Record<string, string>) {
-    this.uid = json["localId"];
-    this.email = json["email"];
-    this.name = json["displayName"];
-    this.photoUrl = json["photoUrl"];
-    this.validSince = json["validSince"];
-    this.lastLoginAt = json["lastLoginAt"];
-    this.createdAt = json["createdAt"];
-    this.lastRefreshAt = json["lastRefreshAt"];
+    this.barcodeId = Number(json["barcode_id"]);
+    this.name = json["name"];
+    this.imageId = Number(json["image_id"]);
+  }
+}
+
+export class ProductImage {
+  id: number;
+  barcodeId: number;
+  noteId: number;
+
+  constructor(json: Record<string, string>) {
+    this.id = Number(json["id"]);
+    this.barcodeId = Number(json["barcode_id"]);
+    this.noteId = Number(json["note_id"]);
   }
 }

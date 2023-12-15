@@ -1,12 +1,12 @@
 import { Router } from "https://deno.land/x/oak/mod.ts";
 import {
-  getProduct,
+  getProductList,
+  getProductDetail,
 } from "../controller/product_controller.ts";
 
 const productRouter = new Router();
 
 productRouter
-  // 캠프 관련
-  .get("/product", getProduct)
+  .get("/product", getProductList)
 
 export { productRouter };

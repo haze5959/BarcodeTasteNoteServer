@@ -1,7 +1,7 @@
 @testable import App
 import XCTVapor
 
-final class AppTests: XCTestCase {
+final class UserTests: XCTestCase {
     var app: Application!
     
     override func setUp() async throws {
@@ -14,8 +14,8 @@ final class AppTests: XCTestCase {
         self.app = nil
     }
     
-    func testHelloWorld() async throws {
-        try await self.app.test(.GET, "hello", afterResponse: { res async in
+    func testShowUser() async throws {
+        try await self.app.test(.GET, "users?id=1234", afterResponse: { res async in
             XCTAssertEqual(res.status, .ok)
             XCTAssertEqual(res.body.string, "Hello, world!")
         })

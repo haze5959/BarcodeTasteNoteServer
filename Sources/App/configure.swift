@@ -11,10 +11,10 @@ public func configure(_ app: Application) async throws {
     app.databases.use(
         .postgres(
             configuration: .init(
-                hostname: "localhost",  // TODO: 포스트그리 ㄱㄱ
-                username: "vapor",
-                password: "vapor",
-                database: "vapor",
+                hostname: "localhost",
+                username: "ogyukwon",
+                password: "134655",
+                database: "app",
                 tls: .disable
             )
         ),

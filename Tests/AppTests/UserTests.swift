@@ -15,9 +15,26 @@ final class UserTests: XCTestCase {
     }
     
     func testShowUser() async throws {
-        try await self.app.test(.GET, "users?id=1234", afterResponse: { res async in
-            XCTAssertEqual(res.status, .ok)
-            XCTAssertEqual(res.body.string, "Hello, world!")
+        let nickName = "임시_테스터001"
+        try await self.app.test(.GET, "users", beforeRequest: { req in
+            try req.query.encode(["nick_name": nickName])
+        }, afterResponse: { res async throws in
+            XCTAssertContent(ServerResponse<User>.self, res) { body in
+                XCTAssertEqual(body.result, true)
+                XCTAssertEqual(body.data?.name, nickName)
+            }
+        })
+    }
+    
+    func testCreateUser() async throws {
+        let user = User(name: "임시_테스터001")
+        try await self.app.test(.POST, "users", beforeRequest: { req in
+            try req.content.encode(user)
+        }, afterResponse: { res async throws in
+            XCTAssertContent(ServerResponse<User>.self, res) { body in
+                XCTAssertEqual(body.result, true)
+                XCTAssertEqual(body.data?.name, user.name)
+            }
         })
     }
 }

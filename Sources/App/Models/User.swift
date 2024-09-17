@@ -5,27 +5,28 @@
 //  Created by OQ on 2024/09/07.
 //
 
-import Foundation
+import Vapor
+import Fluent
 
-final class User: Model {
+final class User: Model, Content, @unchecked Sendable {
     static let schema = "user"
     
-    @Children(for: \.$note)
+    @Children(for: \.$user)
     var notes: [Note]
     
-    @Children(for: \.$favorte)
+    @Children(for: \.$user)
     var favorites: [Favorite]
 
     @ID(key: .id)
-    var id: Int
+    var id: UUID?
 
-    @Field(key: "name")
+    @Field(key: "nick_name")
     var name: String
 
     init() { }
 
-    init(barcodeId: Int, name: String) {
-        self.barcodeId = barcodeId
+    init(name: String) {
+        self.id = UUID()
         self.name = name
     }
 }

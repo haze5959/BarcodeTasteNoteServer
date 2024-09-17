@@ -6,52 +6,57 @@
 //
 
 import Vapor
+import FluentKit
 
 struct NoteController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let users = routes.grouped("users")
-        users.get(use: index)
-        users.post(use: create)
+        let notes = routes.grouped("notes")
+        notes.get(use: index)
+        notes.post(use: create)
 
-        users.group(":id") { todo in
+        notes.group(":id") { todo in
             todo.get(use: show)
             todo.put(use: update)
             todo.delete(use: delete)
         }
     }
-
-    func index(req: Request) async throws -> [Todo] {
-        try await Todo.query(on: req.db).all()
-    }
-
-    func create(req: Request) async throws -> Todo {
-        let todo = try req.content.decode(Todo.self)
+    
+    // MARK: create
+    func create(req: Request) async throws -> Note {
+        let todo = try req.content.decode(Note.self)
         try await todo.save(on: req.db)
         return todo
     }
+    
+    // MARK: read
+    func index(req: Request) async throws -> [Note] {
+        try await Note.query(on: req.db).all()
+    }
 
-    func show(req: Request) async throws -> Todo {
-        guard let todo = try await Todo.find(req.parameters.get("id"), on: req.db) else {
+    func show(req: Request) async throws -> Note {
+        guard let todo = try await Note.find(req.parameters.get("id"), on: req.db) else {
             throw Abort(.notFound)
         }
         return todo
     }
-
-    func update(req: Request) async throws -> Todo {
-        guard let todo = try await Todo.find(req.parameters.get("id"), on: req.db) else {
+    
+    // MARK: update
+    func update(req: Request) async throws -> Note {
+        guard let note = try await Note.find(req.parameters.get("id"), on: req.db) else {
             throw Abort(.notFound)
         }
-        let updatedTodo = try req.content.decode(Todo.self)
-        todo.title = updatedTodo.title
-        try await todo.save(on: req.db)
-        return todo
+        let updatedTodo = try req.content.decode(Note.self)
+        note.body = updatedTodo.body
+        try await note.save(on: req.db)
+        return note
     }
-
+    
+    // MARK: delete
     func delete(req: Request) async throws -> HTTPStatus {
-        guard let todo = try await Todo.find(req.parameters.get("id"), on: req.db) else {
+        guard let note = try await Note.find(req.parameters.get("id"), on: req.db) else {
             throw Abort(.notFound)
         }
-        try await todo.delete(on: req.db)
+        try await note.delete(on: req.db)
         return .ok
     }
 }

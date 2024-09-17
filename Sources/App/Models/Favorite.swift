@@ -5,9 +5,10 @@
 //  Created by OQ on 2024/09/07.
 //
 
-import Foundation
+import Vapor
+import Fluent
 
-final class Favorite: Model {
+final class Favorite: Model, @unchecked Sendable {
     static let schema = "favorites"
     
     @Parent(key: "barcode_id")
@@ -17,17 +18,17 @@ final class Favorite: Model {
     var user: User
     
     @ID(key: .id)
-    var id: UUID
+    var id: UUID?
     
     @Field(key: "barcode_id")
-    var barcodeId: Int
+    var barcodeId: UUID
     
     @Field(key: "user_id")
-    var userId: Int
+    var userId: UUID
     
     init() { }
     
-    init(barcodeId: Int, userId: Int) {
+    init(barcodeId: UUID, userId: UUID) {
         self.id = UUID()
         self.barcodeId = barcodeId
         self.userId = userId

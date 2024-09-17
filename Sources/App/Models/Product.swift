@@ -5,34 +5,35 @@
 //  Created by OQ on 2024/09/07.
 //
 
-import Foundation
+import Vapor
+import Fluent
 
-final class Product: Model {
+final class Product: Model, Content, @unchecked Sendable {
     static let schema = "products"
     
-    @Children(for: \.$note)
+    @Children(for: \.$product)
     var notes: [Note]
     
-    @Children(for: \.$favorte)
+    @Children(for: \.$product)
     var favorites: [Favorite]
     
-    @Children(for: \.$productImage)
+    @Children(for: \.$product)
     var images: [ProductImage]
 
-    @ID(key: .id)
-    var id: Int
+    @ID(custom: "barcode_id")
+    var id: UUID?
     
     @Field(key: "user_id")
-    var userId: Int
+    var userId: UUID
 
-    @Field(key: "nick_name")
-    var nickName: String
+    @Field(key: "name")
+    var name: String
 
     init() { }
 
-    init(id: Int, nickName: String) {
-        self.id = id
+    init(userId: UUID, name: String) {
+        self.id = UUID()
         self.userId = userId
-        self.nickName = nickName
+        self.name = name
     }
 }

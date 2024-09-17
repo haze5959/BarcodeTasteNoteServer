@@ -6,52 +6,57 @@
 //
 
 import Vapor
+import FluentKit
 
 struct ProductController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let users = routes.grouped("users")
+        let users = routes.grouped("product")
         users.get(use: index)
         users.post(use: create)
 
-        users.group(":id") { todo in
-            todo.get(use: show)
-            todo.put(use: update)
-            todo.delete(use: delete)
+        users.group(":id") { product in
+            product.get(use: show)
+            product.put(use: update)
+            product.delete(use: delete)
         }
     }
-
-    func index(req: Request) async throws -> [Todo] {
-        try await Todo.query(on: req.db).all()
+    
+    // MARK: create
+    func create(req: Request) async throws -> Product {
+        let product = try req.content.decode(Product.self)
+        try await product.save(on: req.db)
+        return product
     }
-
-    func create(req: Request) async throws -> Todo {
-        let todo = try req.content.decode(Todo.self)
-        try await todo.save(on: req.db)
-        return todo
+    
+    // MARK: read
+    func index(req: Request) async throws -> [Product] {
+        try await Product.query(on: req.db).all()
     }
-
-    func show(req: Request) async throws -> Todo {
-        guard let todo = try await Todo.find(req.parameters.get("id"), on: req.db) else {
+    
+    func show(req: Request) async throws -> Product {
+        guard let product = try await Product.find(req.parameters.get("id"), on: req.db) else {
             throw Abort(.notFound)
         }
-        return todo
+        return product
     }
-
-    func update(req: Request) async throws -> Todo {
-        guard let todo = try await Todo.find(req.parameters.get("id"), on: req.db) else {
+    
+    // MARK: update
+    func update(req: Request) async throws -> Product {
+        guard let product = try await Product.find(req.parameters.get("id"), on: req.db) else {
             throw Abort(.notFound)
         }
-        let updatedTodo = try req.content.decode(Todo.self)
-        todo.title = updatedTodo.title
-        try await todo.save(on: req.db)
-        return todo
+        let updatedProduct = try req.content.decode(Product.self)
+        product.name = updatedProduct.name
+        try await product.save(on: req.db)
+        return product
     }
-
+    
+    // MARK: delete
     func delete(req: Request) async throws -> HTTPStatus {
-        guard let todo = try await Todo.find(req.parameters.get("id"), on: req.db) else {
+        guard let product = try await Product.find(req.parameters.get("id"), on: req.db) else {
             throw Abort(.notFound)
         }
-        try await todo.delete(on: req.db)
+        try await product.delete(on: req.db)
         return .ok
     }
 }

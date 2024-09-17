@@ -5,9 +5,10 @@
 //  Created by OQ on 2024/09/07.
 //
 
-import Foundation
+import Vapor
+import Fluent
 
-final class Note: Model {
+final class Note: Model, Content, @unchecked Sendable {
     static let schema = "notes"
     
     @Parent(key: "barcode_id")
@@ -17,13 +18,13 @@ final class Note: Model {
     var user: User
 
     @ID(key: .id)
-    var id: Int
+    var id: UUID?
     
     @Field(key: "user_id")
-    var userId: Int
+    var userId: UUID
 
     @Field(key: "barcode_id")
-    var barcodeId: Int
+    var barcodeId: UUID
     
     @Field(key: "body")
     var body: String
@@ -33,11 +34,19 @@ final class Note: Model {
     
     init() { }
 
-    init(id: Int, userId: Int, barcodeId: Int, body: String, registerd: Date) {
-        self.id = id
+    init(userId: UUID, barcodeId: UUID, body: String, registerd: Date) {
+        self.id = UUID()
         self.userId = userId
         self.barcodeId = barcodeId
         self.body = body
         self.registerd = registerd
     }
+}
+
+struct NoteContent: Content {
+    let id: UUID
+    let userId: UUID
+    let barcodeId: UUID
+    let body: String
+    let registerd: Date
 }

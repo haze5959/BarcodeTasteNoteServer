@@ -16,23 +16,23 @@ struct UserController: RouteCollection {
         
         users.group(":id") { user in
             user.get(use: show)
-            user.put(use: updateNickName)
             user.delete(use: delete)
         }
     }
     
     // MARK: create
     func create(req: Request) async throws -> ServerResponse<User> {
-        let user = try req.content.decode(User.self)
+        let reqBody = try req.content.decode(NickName.self)
         let count = try await User.query(on: req.db)
-            .filter(\.$name == user.name)
+            .filter(\.$name == reqBody.nick_name)
             .count()
         
         guard count == 0 else {
-            let error = ServerError(code: .nickNameAlreadyExist, msg: "\(user.name) user already exist")
+            let error = ServerError(code: .nickNameAlreadyExist, msg: "\(reqBody.nick_name) user already exist")
             return .init(error: error)
         }
         
+        let user = User(name: reqBody.nick_name)
         try await user.create(on: req.db)
         return .init(data: user)
     }

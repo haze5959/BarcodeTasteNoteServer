@@ -11,7 +11,7 @@ import Fluent
 final class ProductImage: Model, @unchecked Sendable {
     static let schema = "product_images"
     
-    @Parent(key: "barcode_id")
+    @Parent(key: "product_id")
     var product: Product
     
     @Parent(key: "note_id")
@@ -20,17 +20,17 @@ final class ProductImage: Model, @unchecked Sendable {
     @ID(key: .id)
     var id: UUID?
     
-    @Field(key: "barcode_id")
-    var barcodeId: UUID
+    @Field(key: "product_id")
+    var productId: UUID
 
     @Field(key: "note_id")
     var noteId: UUID
 
     init() { }
 
-    init(barcodeId: UUID, noteId: UUID) {
+    init(productId: UUID, noteId: UUID) {
         self.id = UUID()
-        self.barcodeId = barcodeId
+        self.productId = productId
         self.noteId = noteId
     }
 }

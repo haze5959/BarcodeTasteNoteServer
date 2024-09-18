@@ -11,7 +11,7 @@ import Fluent
 final class Note: Model, Content, @unchecked Sendable {
     static let schema = "notes"
     
-    @Parent(key: "barcode_id")
+    @Parent(key: "product_id")
     var product: Product
     
     @Parent(key: "user_id")
@@ -23,8 +23,8 @@ final class Note: Model, Content, @unchecked Sendable {
     @Field(key: "user_id")
     var userId: UUID
 
-    @Field(key: "barcode_id")
-    var barcodeId: UUID
+    @Field(key: "product_id")
+    var productId: UUID
     
     @Field(key: "body")
     var body: String
@@ -34,19 +34,11 @@ final class Note: Model, Content, @unchecked Sendable {
     
     init() { }
 
-    init(userId: UUID, barcodeId: UUID, body: String, registerd: Date) {
+    init(userId: UUID, productId: UUID, body: String) {
         self.id = UUID()
         self.userId = userId
-        self.barcodeId = barcodeId
+        self.productId = productId
         self.body = body
-        self.registerd = registerd
+        self.registerd = Date()
     }
-}
-
-struct NoteContent: Content {
-    let id: UUID
-    let userId: UUID
-    let barcodeId: UUID
-    let body: String
-    let registerd: Date
 }

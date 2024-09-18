@@ -11,7 +11,7 @@ import Fluent
 final class Favorite: Model, @unchecked Sendable {
     static let schema = "favorites"
     
-    @Parent(key: "barcode_id")
+    @Parent(key: "product_id")
     var product: Product
     
     @Parent(key: "user_id")
@@ -20,17 +20,17 @@ final class Favorite: Model, @unchecked Sendable {
     @ID(key: .id)
     var id: UUID?
     
-    @Field(key: "barcode_id")
-    var barcodeId: UUID
+    @Field(key: "product_id")
+    var productId: UUID
     
     @Field(key: "user_id")
     var userId: UUID
     
     init() { }
     
-    init(barcodeId: UUID, userId: UUID) {
+    init(productId: UUID, userId: UUID) {
         self.id = UUID()
-        self.barcodeId = barcodeId
+        self.productId = productId
         self.userId = userId
     }
 }

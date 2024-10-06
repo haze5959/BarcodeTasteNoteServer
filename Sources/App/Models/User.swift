@@ -19,14 +19,18 @@ final class User: Model, Content, @unchecked Sendable {
 
     @ID(key: .id)
     var id: UUID?
+    
+    @Field(key: "sub")
+    var sub: String
 
     @Field(key: "nick_name")
     var name: String
 
     init() { }
 
-    init(name: String) {
+    init(sub: String, name: String) {
         self.id = UUID()
+        self.sub = sub
         self.name = name
     }
 }

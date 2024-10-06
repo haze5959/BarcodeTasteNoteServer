@@ -4,6 +4,11 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>BarcodeTasteNoteServer-Package.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
 		<key>hello.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
@@ -18,6 +23,11 @@
 			<true/>
 		</dict>
 		<key>AppTests</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>BarcodeTasteNoteServer</key>
 		<dict>
 			<key>primary</key>
 			<true/>

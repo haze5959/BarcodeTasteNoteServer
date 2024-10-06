@@ -9,19 +9,26 @@ import Vapor
 import FluentKit
 
 struct UserController: RouteCollection {
+    let authMiddleware: Auth0Middleware
+    
     func boot(routes: RoutesBuilder) throws {
         let users = routes.grouped("users")
-        users.post(use: create)
-        users.get(use: showByNickName)
-        
-        users.group(":id") { user in
-            user.get(use: show)
-            user.delete(use: delete)
+        let authenticated = users.grouped(authMiddleware)
+        authenticated.post(use: create)
+        authenticated.get(use: show)
+        authenticated.put(use: updateNickName)
+        authenticated.delete(use: delete)
+
+        users.group("search") { user in
+            user.get(use: showByNickName)
         }
     }
     
     // MARK: create
     func create(req: Request) async throws -> ServerResponse<User> {
+        let token = try req.requireToken()
+        let sub = token.sub.value
+        
         let reqBody = try req.content.decode(NickName.self)
         let count = try await User.query(on: req.db)
             .filter(\.$name == reqBody.nick_name)
@@ -32,19 +39,20 @@ struct UserController: RouteCollection {
             return .init(error: error)
         }
         
-        let user = User(name: reqBody.nick_name)
+        let user = User(sub: sub, name: reqBody.nick_name)
         try await user.create(on: req.db)
         return .init(data: user)
     }
     
     // MARK: read
     func show(req: Request) async throws -> ServerResponse<User> {
-        guard let userId: UUID = req.parameters.get("id") else {
-            throw Abort(.badRequest)
-        }
-        
-        guard let user = try await User.find(userId, on: req.db) else {
-            let error = ServerError(code: .emptyData, msg: "\(userId) user does not exist")
+        let token = try req.requireToken()
+        let sub = token.sub.value
+
+        guard let user = try? await User.query(on: req.db)
+            .filter(\.$sub == sub)
+            .first() else {
+            let error = ServerError(code: .emptyData, msg: "user does not exist")
             return .init(error: error)
         }
         return .init(data: user)
@@ -74,12 +82,13 @@ struct UserController: RouteCollection {
             return .init(error: error)
         }
         
-        guard let userId: UUID = req.parameters.get("id") else {
-            throw Abort(.badRequest)
-        }
-        
-        guard let user = try await User.find(userId, on: req.db) else {
-            let error = ServerError(code: .emptyData, msg: "\(userId) user does not exist")
+        let token = try req.requireToken()
+        let sub = token.sub.value
+
+        guard let user = try? await User.query(on: req.db)
+            .filter(\.$sub == sub)
+            .first() else {
+            let error = ServerError(code: .emptyData, msg: "user does not exist")
             return .init(error: error)
         }
         
@@ -90,12 +99,13 @@ struct UserController: RouteCollection {
     
     // MARK: delete
     func delete(req: Request) async throws -> ServerResponse<User> {
-        guard let userId: UUID = req.parameters.get("id") else {
-            throw Abort(.badRequest)
-        }
-        
-        guard let user = try await User.find(userId, on: req.db) else {
-            let error = ServerError(code: .emptyData, msg: "\(userId) user does not exist")
+        let token = try req.requireToken()
+        let sub = token.sub.value
+
+        guard let user = try? await User.query(on: req.db)
+            .filter(\.$sub == sub)
+            .first() else {
+            let error = ServerError(code: .emptyData, msg: "user does not exist")
             return .init(error: error)
         }
         

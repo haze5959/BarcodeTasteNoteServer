@@ -9,6 +9,8 @@ import Vapor
 import FluentKit
 
 struct NoteController: RouteCollection {
+    let authMiddleware: Auth0Middleware
+    
     func boot(routes: RoutesBuilder) throws {
         let notes = routes.grouped("notes")
         notes.post(use: create)

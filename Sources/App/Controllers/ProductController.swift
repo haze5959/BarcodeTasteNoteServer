@@ -9,6 +9,8 @@ import Vapor
 import FluentKit
 
 struct ProductController: RouteCollection {
+    let authMiddleware: Auth0Middleware
+    
     func boot(routes: RoutesBuilder) throws {
         let products = routes.grouped("products")
         products.post(use: create)

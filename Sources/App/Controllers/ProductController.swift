@@ -13,15 +13,16 @@ struct ProductController: RouteCollection {
     
     func boot(routes: RoutesBuilder) throws {
         let products = routes.grouped("products")
-        products.post(use: create)
-        products.get(use: paginate)
+        let authenticated = products.grouped(authMiddleware)
+        authenticated.post(use: create)
         
+        products.get(use: paginate)
         products.group(":id") { product in
             product.get(use: show)
             product.delete(use: delete)
         }
         
-        products.group("barcode/:barcode_id") { product in
+        products.group("barcode/:id") { product in
             product.get(use: showByBarcode)
         }
     }
@@ -60,7 +61,7 @@ struct ProductController: RouteCollection {
     }
     
     func showByBarcode(req: Request) async throws -> ServerResponse<Product> {
-        guard let barcodeId: String = req.parameters.get("barcode_id") else {
+        guard let barcodeId: String = req.parameters.get("id") else {
             throw Abort(.badRequest)
         }
         

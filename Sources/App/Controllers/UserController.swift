@@ -49,9 +49,7 @@ struct UserController: RouteCollection {
         let token = try req.requireToken()
         let sub = token.sub.value
 
-        guard let user = try? await User.query(on: req.db)
-            .filter(\.$sub == sub)
-            .first() else {
+        guard let user = await User.getUser(sub: sub, db: req.db) else {
             let error = ServerError(code: .emptyData, msg: "user does not exist")
             return .init(error: error)
         }
@@ -85,9 +83,7 @@ struct UserController: RouteCollection {
         let token = try req.requireToken()
         let sub = token.sub.value
 
-        guard let user = try? await User.query(on: req.db)
-            .filter(\.$sub == sub)
-            .first() else {
+        guard let user = await User.getUser(sub: sub, db: req.db) else {
             let error = ServerError(code: .emptyData, msg: "user does not exist")
             return .init(error: error)
         }
@@ -102,9 +98,7 @@ struct UserController: RouteCollection {
         let token = try req.requireToken()
         let sub = token.sub.value
 
-        guard let user = try? await User.query(on: req.db)
-            .filter(\.$sub == sub)
-            .first() else {
+        guard let user = await User.getUser(sub: sub, db: req.db) else {
             let error = ServerError(code: .emptyData, msg: "user does not exist")
             return .init(error: error)
         }

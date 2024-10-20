@@ -19,11 +19,14 @@ func routes(_ app: Application) throws {
 }
 
 private func getAuth0(app: Application) throws -> Auth0 {
-    let auth0Audience = "https://dev-0ey2zkme2zf6lczu.us.auth0.com/api/v2/"
-    let auth0Issuer = "https://dev-0ey2zkme2zf6lczu.us.auth0.com/"
-    let certificate = try String(contentsOfFile: "/Users/ogyukwon/Documents/Projects/BarcodeTasteNoteServer/certificate.pem")
-    let key = try RSAKey.certificate(pem: certificate)
+    guard let auth0Audience = Environment.get("AUTH0_AUDIENCE"),
+          let auth0Issuer = Environment.get("AUTH0_ISSUER"),
+          let certPath = Environment.get("AUTH0_CERT_PATH") else {
+        throw Abort(.custom(code: 9999, reasonPhrase: ".env Variables ERROR!!"))
+    }
     
+    let certificate = try String(contentsOfFile: certPath)
+    let key = try RSAKey.certificate(pem: certificate)
 
     let auth0 = Auth0(
         client: app.http.client.shared,

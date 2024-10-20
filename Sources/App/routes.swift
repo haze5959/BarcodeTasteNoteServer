@@ -15,6 +15,7 @@ func routes(_ app: Application) throws {
     try app.register(collection: NoteController(authMiddleware: auth0Middleware))
     try app.register(collection: ProductController(authMiddleware: auth0Middleware))
     try app.register(collection: UserController(authMiddleware: auth0Middleware))
+    try app.register(collection: ImageController(authMiddleware: auth0Middleware))
 }
 
 private func getAuth0(app: Application) throws -> Auth0 {

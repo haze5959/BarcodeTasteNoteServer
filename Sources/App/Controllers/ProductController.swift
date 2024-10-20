@@ -38,7 +38,7 @@ struct ProductController: RouteCollection {
         try await req.db.transaction { database in
             try await product.save(on: req.db)
             
-            if let barcodeId = productInfo.barcodeId, let productId = product.id {
+            if let barcodeId = productInfo.barcode_id, let productId = product.id {
                 let barcode = Barcode(barcodeId: barcodeId, productId: productId)
                 try await barcode.save(on: req.db)
             }
@@ -48,7 +48,7 @@ struct ProductController: RouteCollection {
     }
     
     // MARK: read
-    func show(req: Request) async throws -> ServerResponse<Product> {
+    func show(req: Request) async throws -> ServerResponse<ProductDefail> {
         guard let productId: UUID = req.parameters.get("id") else {
             throw Abort(.badRequest)
         }
@@ -57,10 +57,17 @@ struct ProductController: RouteCollection {
             let error = ServerError(code: .emptyData, msg: "\(productId) product does not exist")
             return .init(error: error)
         }
-        return .init(data: product)
+        
+        let images = try await product.$images.query(on: req.db)
+            .range(..<Constants.maxImageCount)
+            .all()
+        let favoriteCount = try await product.$favorites.query(on: req.db).count()
+        
+        let data = ProductDefail(product: product, images: images, favoriteCount: favoriteCount)
+        return .init(data: data)
     }
     
-    func showByBarcode(req: Request) async throws -> ServerResponse<Product> {
+    func showByBarcode(req: Request) async throws -> ServerResponse<ProductDefail> {
         guard let barcodeId: String = req.parameters.get("id") else {
             throw Abort(.badRequest)
         }
@@ -76,10 +83,17 @@ struct ProductController: RouteCollection {
             let error = ServerError(code: .emptyData, msg: "\(barcode.productId) product does not exist")
             return .init(error: error)
         }
-        return .init(data: product)
+        
+        let images = try await product.$images.query(on: req.db)
+            .range(..<Constants.maxImageCount)
+            .all()
+        let favoriteCount = try await product.$favorites.query(on: req.db).count()
+        
+        let data = ProductDefail(product: product, images: images, favoriteCount: favoriteCount)
+        return .init(data: data)
     }
     
-    func paginate(req: Request) async throws -> ServerResponse<[Product]> {
+    func paginate(req: Request) async throws -> ServerResponse<[ProductDefail]> {
         let queryParams = try req.query.decode(Pagination.self)
         var query = Product.query(on: req.db)
         if let searchName = queryParams.name {
@@ -87,7 +101,16 @@ struct ProductController: RouteCollection {
         }
         
         let productPage = try await query.paginate(.init(page: queryParams.page, per: queryParams.per))
-        return .init(data: productPage.items)
+        var data: [ProductDefail] = []
+        for product in productPage.items {  // TODO: 튜닝 필요 - DB 조회 부하가 있음
+            let limitedImages = try await product.$images.query(on: req.db)
+                .range(..<Constants.maxImageCountForThumnnail)  // 최대 3개의 이미지 가져오기
+                .all()
+            let detail = ProductDefail(product: product, images: limitedImages, favoriteCount: nil)
+            data.append(detail)
+        }
+
+        return .init(data: data)
     }
     
     // MARK: update
@@ -107,12 +130,21 @@ extension ProductController {
     struct ProductInfo: Content {
         let name: String
         let type: Int
-        let barcodeId: String?
+        let barcode_id: String?
     }
     
     struct Pagination: Content {
         let page: Int
         let per: Int
         let name: String?
+    }
+}
+
+// MARK: Response
+extension ProductController {
+    struct ProductDefail: Content {
+        let product: Product
+        let images: [ProductImage]
+        let favoriteCount: Int?
     }
 }

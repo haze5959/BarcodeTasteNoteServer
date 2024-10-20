@@ -16,6 +16,9 @@ final class Note: Model, Content, @unchecked Sendable {
     
     @Parent(key: "user_id")
     var user: User
+    
+    @Children(for: \.$note)
+    var images: [ProductImage]
 
     @ID(key: .id)
     var id: UUID?

@@ -42,7 +42,17 @@ struct NoteController: RouteCollection {
         
         let noteInfo = try req.content.decode(NoteInfo.self)
         let note = Note(userId: userId, productId: noteInfo.product_id, body: noteInfo.body)
-        try await note.save(on: req.db)
+        try await req.db.transaction { database in
+            try await note.save(on: req.db)
+            let imageIds = noteInfo.image_ids
+            for imageId in imageIds {
+                if let image = try await ProductImage.find(imageId, on: req.db) {
+                    image.noteId = note.id
+                    try await image.update(on: req.db)
+                }
+            }
+        }
+        
         return .init(data: note)
     }
     
@@ -52,27 +62,41 @@ struct NoteController: RouteCollection {
             throw Abort(.badRequest)
         }
         
-        guard let note = try await Note.find(noteId, on: req.db) else {
+        guard let note = try await Note.query(on: req.db)
+            .with(\.$product)
+            .with(\.$user)
+            .filter(\.$id == noteId)
+            .first() else {
             throw Abort(.notFound)
         }
         
-        guard let user = try await User.find(note.userId, on: req.db) else {
-            throw Abort(.notFound)
-        }
+        let images = try await ProductImage.query(on: req.db)
+            .filter(\.$noteId == note.id)
+            .range(..<Constants.maxImageCount)
+            .all()
         
-        return .init(data: .init(note: note, user: user))
+        return .init(data: .init(note: note, product: note.product, user: note.user, images: images))
     }
     
     func paginate(req: Request) async throws -> ServerResponse<[NoteResponse]> {
         let queryParams = try req.query.decode(Pagination.self)
         var query = Note.query(on: req.db)
-            .join(User.self, on: \Note.$userId == \User.$id)
+            .with(\.$product)
+            .with(\.$user)
         if let searchProductId = queryParams.product_id {
             query = query.filter(\.$productId == searchProductId)
         }
         
         let result = try await query.paginate(.init(page: queryParams.page, per: queryParams.per))
-        let data = result.items.map { NoteResponse(note: $0, user: try? $0.joined(User.self)) }
+        var data: [NoteResponse] = []
+        for note in result.items {  // TODO: 튜닝 필요 - DB 조회 부하가 있음
+            let limitedImages = try await note.$images.query(on: req.db)
+                .range(..<Constants.maxImageCountForThumnnail)  // 최대 3개의 이미지 가져오기
+                .all()
+            let response = NoteResponse(note: note, product: note.product, user: note.user, images: limitedImages)
+            data.append(response)
+        }
+        
         return .init(data: data)
     }
     
@@ -90,7 +114,15 @@ struct NoteController: RouteCollection {
             .filter(\.$userId == userId)
             .paginate(.init(page: queryParams.page, per: queryParams.per))
         
-        let data = result.items.map { NoteResponse(note: $0, user: user) }
+        var data: [NoteResponse] = []
+        for note in result.items {  // TODO: 튜닝 필요 - DB 조회 부하가 있음
+            let limitedImages = try await note.$images.query(on: req.db)
+                .range(..<Constants.maxImageCountForThumnnail)  // 최대 3개의 이미지 가져오기
+                .all()
+            let response = NoteResponse(note: note, product: note.product, user: note.user, images: limitedImages)
+            data.append(response)
+        }
+        
         return .init(data: data)
     }
     
@@ -153,6 +185,7 @@ extension NoteController {
     struct NoteInfo: Content {
         let product_id: UUID
         let body: String
+        let image_ids: [UUID]
     }
     
     struct Pagination: Content {
@@ -160,9 +193,14 @@ extension NoteController {
         let per: Int
         let product_id: UUID?
     }
-    
+}
+
+// MARK: Response
+extension NoteController {
     struct NoteResponse: Content  {
         let note: Note
+        let product: Product
         let user: User?
+        let images: [ProductImage]
     }
 }

@@ -18,9 +18,13 @@ struct UserController: RouteCollection {
         authenticated.get(use: show)
         authenticated.put(use: updateNickName)
         authenticated.delete(use: delete)
-
+        
         users.group("search") { user in
             user.get(use: showByNickName)
+        }
+        
+        authenticated.group("favorites") { user in
+            user.get(use: showMyFavorites)
         }
     }
     
@@ -48,7 +52,7 @@ struct UserController: RouteCollection {
     func show(req: Request) async throws -> ServerResponse<User> {
         let token = try req.requireToken()
         let sub = token.sub.value
-
+        
         guard let user = await User.getUser(sub: sub, db: req.db) else {
             let error = ServerError(code: .emptyData, msg: "user does not exist")
             return .init(error: error)
@@ -68,6 +72,24 @@ struct UserController: RouteCollection {
         return .init(data: user)
     }
     
+    func showMyFavorites(req: Request) async throws -> ServerResponse<Favorites> {
+        let token = try req.requireToken()
+        let sub = token.sub.value
+        
+        guard let user = await User.getUser(sub: sub, db: req.db),
+              let userId = user.id else {
+            let error = ServerError(code: .emptyData, msg: "user does not exist")
+            return .init(error: error)
+        }
+        
+        let myFavorites = try await Favorite.query(on: req.db)
+            .filter(\.$userId == userId)
+            .all()
+        
+        let myFavoriteProductIdArr = myFavorites.map { $0.productId }
+        return .init(data: .init(productIds: myFavoriteProductIdArr))
+    }
+    
     // MARK: update
     func updateNickName(req: Request) async throws -> ServerResponse<User> {
         let reqBody = try req.content.decode(NickName.self)
@@ -82,7 +104,7 @@ struct UserController: RouteCollection {
         
         let token = try req.requireToken()
         let sub = token.sub.value
-
+        
         guard let user = await User.getUser(sub: sub, db: req.db) else {
             let error = ServerError(code: .emptyData, msg: "user does not exist")
             return .init(error: error)
@@ -97,7 +119,7 @@ struct UserController: RouteCollection {
     func delete(req: Request) async throws -> ServerResponse<User> {
         let token = try req.requireToken()
         let sub = token.sub.value
-
+        
         guard let user = await User.getUser(sub: sub, db: req.db) else {
             let error = ServerError(code: .emptyData, msg: "user does not exist")
             return .init(error: error)
@@ -112,5 +134,12 @@ struct UserController: RouteCollection {
 extension UserController {
     struct NickName: Content {
         let nick_name: String
+    }
+}
+
+// MARK: Response
+extension UserController {
+    struct Favorites: Content {
+        let productIds: [UUID]
     }
 }

@@ -8,7 +8,7 @@
 import Vapor
 import Fluent
 
-final class ProductImage: Model, @unchecked Sendable {
+final class ProductImage: Model, Content, @unchecked Sendable {
     static let schema = "product_images"
     
     @Parent(key: "product_id")
@@ -24,13 +24,17 @@ final class ProductImage: Model, @unchecked Sendable {
     var productId: UUID
 
     @Field(key: "note_id")
-    var noteId: UUID
+    var noteId: UUID?
+    
+    @Field(key: "user_id")
+    var userId: UUID
 
     init() { }
 
-    init(productId: UUID, noteId: UUID) {
+    init(productId: UUID, noteId: UUID?, userId: UUID) {
         self.id = UUID()
         self.productId = productId
         self.noteId = noteId
+        self.userId = userId
     }
 }
